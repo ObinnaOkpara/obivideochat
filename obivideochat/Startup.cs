@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using obivideochat.Hubs;
+using obivideochat.Models;
 
 namespace obivideochat
 {
@@ -24,6 +26,21 @@ namespace obivideochat
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddRazorPages();
+
+            //Cross-origin policy to accept request from localhost:8084.
+            services.AddCors(options =>
+            {
+                options.AddPolicy("CorsPolicy",
+                    x => x.AllowAnyOrigin()
+                        .AllowAnyMethod()
+                        .AllowAnyHeader());
+            });
+
+            services.AddSignalR();
+
+            services.AddSingleton<List<User>>();
+            services.AddSingleton<List<UserCall>>();
+            services.AddSingleton<List<CallOffer>>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -42,6 +59,7 @@ namespace obivideochat
 
             app.UseHttpsRedirection();
             app.UseStaticFiles();
+            app.UseCors("CorsPolicy");
 
             app.UseRouting();
 
@@ -50,6 +68,10 @@ namespace obivideochat
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapRazorPages();
+                endpoints.MapHub<ConnectionHub>("/ConnectionHub", options =>
+                {
+                    options.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets;
+                });
             });
         }
     }
