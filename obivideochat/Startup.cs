@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -28,6 +29,12 @@ namespace obivideochat
         {
             services.AddRazorPages();
 
+            services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardLimit = 2;
+                options.KnownProxies.Add(IPAddress.Parse("127.0.10.1"));
+                options.ForwardedForHeaderName = "X-Forwarded-For-My-Custom-Header-Name";
+            });
             services.AddHttpsRedirection(options =>
             {
                 options.RedirectStatusCode = StatusCodes.Status308PermanentRedirect;
@@ -38,9 +45,15 @@ namespace obivideochat
             services.AddCors(options =>
             {
                 options.AddPolicy("CorsPolicy",
-                    x => x.AllowAnyOrigin()
-                        .AllowAnyMethod()
-                        .AllowAnyHeader());
+                builder =>
+                {
+                    //builder.SetIsOriginAllowedToAllowWildcardSubdomains();
+                    //builder.WithOrigins("https://*.insytai.com", "https://insytai.com");
+                    builder.AllowAnyOrigin();
+                    builder.AllowAnyHeader();
+                    builder.AllowAnyMethod();
+                    builder.AllowCredentials();
+                });
             });
 
             services.AddSignalR();
