@@ -1,12 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -29,31 +28,13 @@ namespace obivideochat
         {
             services.AddRazorPages();
 
-            services.Configure<ForwardedHeadersOptions>(options =>
-            {
-                options.ForwardLimit = 2;
-                options.KnownProxies.Add(IPAddress.Parse("127.0.10.1"));
-                options.ForwardedForHeaderName = "X-Forwarded-For-My-Custom-Header-Name";
-            });
-            services.AddHttpsRedirection(options =>
-            {
-                options.RedirectStatusCode = StatusCodes.Status308PermanentRedirect;
-                options.HttpsPort = 443;
-            });
-
             //Cross-origin policy to accept request from localhost:8084.
             services.AddCors(options =>
             {
                 options.AddPolicy("CorsPolicy",
-                builder =>
-                {
-                    //builder.SetIsOriginAllowedToAllowWildcardSubdomains();
-                    //builder.WithOrigins("https://*.insytai.com", "https://insytai.com");
-                    builder.AllowAnyOrigin();
-                    builder.AllowAnyHeader();
-                    builder.AllowAnyMethod();
-                    builder.AllowCredentials();
-                });
+                    x => x.AllowAnyOrigin()
+                        .AllowAnyMethod()
+                        .AllowAnyHeader());
             });
 
             services.AddSignalR();
@@ -74,10 +55,14 @@ namespace obivideochat
             {
                 app.UseExceptionHandler("/Error");
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
-                app.UseHsts();
+                //app.UseHsts();
             }
+            var options = new RewriteOptions()
+                .AddRedirectToHttpsPermanent();
 
-            app.UseHttpsRedirection();
+            app.UseRewriter(options);
+
+            //app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseCors("CorsPolicy");
 
