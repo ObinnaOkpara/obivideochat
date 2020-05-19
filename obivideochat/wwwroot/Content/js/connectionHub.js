@@ -226,7 +226,9 @@ const callbackUserMediaSuccess = (stream) => {
 
 const initializeUserMedia = () => {
     console.log('WebRTC: InitializeUserMedia: ');
-    navigator.getUserMedia(webrtcConstraints, callbackUserMediaSuccess, errorHandler);
+    navigator.mediaDevices.getUserMedia(webrtcConstraints)
+        .then(callbackUserMediaSuccess)
+        .catch(errorHandler);
 };
 // stream removed
 const callbackRemoveStream = (connection, evt) => {
